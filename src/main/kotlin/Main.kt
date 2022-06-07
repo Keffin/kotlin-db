@@ -1,6 +1,8 @@
 import enums.MetaCommandResult
 import enums.PrepareResult
-import enums.StatementType
+import metacommand.MetaCommand
+import statement.Statement
+import statement.StatementParser
 import kotlin.system.exitProcess
 
 
@@ -20,42 +22,34 @@ fun readInput(): String {
 }
 
 
-fun doMetaCommand(command: String): MetaCommandResult {
-    if (command == ".exit") {
-        exitProcess(1)
-    } else {
-        return MetaCommandResult.META_COMMAND_UNRECOGNIZED_COMMAND
-    }
-}
-
-data class Statement(var statementType: StatementType)
-
-fun prepareStatement(command: String, statement: Statement): PrepareResult {
-    if (command.startsWith("insert")){
-        statement.statementType = StatementType.STATEMENT_INSERT
-        return PrepareResult.PREPARE_SUCCESS
-    }
-    if (command.startsWith("select")) {
-        statement.statementType = StatementType.STATEMENT_SELECT
-        return PrepareResult.PREPARE_SUCCESS
-    }
-    return PrepareResult.PREPARE_UNRECOGNIZED_STATEMENT
-}
+data class Row(val id: Long, val userName: String, val email: String)
 
 fun main() {
+    val statementParser = StatementParser()
+    val metaCommand = MetaCommand()
+
     while (true) {
         printPrompt()
 
         val line: String = readInput()
 
         if (line.startsWith(".")){
-            when (doMetaCommand(line)) {
+            when (metaCommand.doMetaCommand(line)) {
                 MetaCommandResult.META_COMMAND_SUCCESS -> continue
-                MetaCommandResult.META_COMMAND_UNRECOGNIZED_COMMAND -> {
-                    println("Unrecognized command: $line")
-                    continue
-                }
+                MetaCommandResult.META_COMMAND_UNRECOGNIZED_COMMAND -> println("Unrecognized command: $line")
             }
         }
+        else {
+            val statement = Statement()
+            val statementEvaluation: Pair<PrepareResult, Statement> = statementParser.prepareStatement(line, statement)
+
+            if (statementEvaluation.first == PrepareResult.PREPARE_UNRECOGNIZED_STATEMENT) {
+                throw IllegalArgumentException("Input was faulty")
+            }
+
+            statementParser.executeStatement(statementEvaluation.second)
+            println("Executed.")
+        }
+
     }
 }
