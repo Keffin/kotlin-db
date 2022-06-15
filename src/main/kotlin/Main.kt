@@ -1,8 +1,10 @@
+import database.Table
 import enums.MetaCommandResult
 import enums.PrepareResult
 import metacommand.MetaCommand
 import statement.Statement
 import statement.StatementParser
+import java.nio.ByteBuffer
 import kotlin.system.exitProcess
 
 
@@ -21,11 +23,10 @@ fun readInput(): String {
     }
 }
 
-
-data class Row(val id: Long, val userName: String, val email: String)
-
 fun main() {
-    val statementParser = StatementParser()
+    val byteBuffer: ByteBuffer = ByteBuffer.allocate(4096)
+    val table: Table = Table(0, mutableListOf())
+    val statementParser = StatementParser(byteBuffer, table)
     val metaCommand = MetaCommand()
 
     while (true) {
